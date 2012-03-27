@@ -1,0 +1,3 @@
+#network-graphics
+
+This application offers an API to get and set the settings for ifconfig, iwconfig and xset, xdotool, ...
