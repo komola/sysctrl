@@ -34,7 +34,7 @@ app.get('/', routes.index);
 app.get('/grafic', grafic.index);
 app.post('/grafic', grafic.set);
 app.get('/network', network.index);
-app.post('/network', network.set);
+app.post('/network/getGateway', network.getGateway);
 
 app.listen(3000);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
