@@ -1,6 +1,6 @@
 express = require("express")
-routes = require("./routes")
-grafic = require("./routes/grafic")
+#routes = require("./routes")
+#grafic = require("./routes/grafic")
 network = require("./routes/network")
 app = module.exports = express.createServer()
 app.configure ->
@@ -25,5 +25,7 @@ app.configure "production", ->
 #app.post "/grafic", grafic.set
 app.get "/network/getGateway", network.getGateway
 app.get "/network/getInterfaces", network.getInterfaces
+app.get "/network/setGateway", network.setGateway
+app.get "/network/setInterface", network.setInterface
 app.listen 3000
 console.log "Express server listening on port %d in %s mode", app.address().port, app.settings.env
