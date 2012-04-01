@@ -1,5 +1,5 @@
 express = require("express")
-#routes = require("./routes")
+routes = require("./routes")
 #grafic = require("./routes/grafic")
 network = require("./routes/network")
 app = module.exports = express.createServer()
@@ -20,7 +20,8 @@ app.configure "development", ->
 app.configure "production", ->
   app.use express.errorHandler()
 
-#app.get "/", routes.index
+app.get "/", routes.index
+
 #app.get "/grafic", grafic.index
 #app.post "/grafic", grafic.set
 app.get "/network/getGateway", network.getGateway
