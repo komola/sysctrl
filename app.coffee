@@ -1,7 +1,18 @@
+require("./logger").init()
+logger = require('./logger').logger 
+
+logger.use(require('devnull/transports/stream'), {
+    stream: require('fs').createWriteStream('logger.log')
+})
+
+logger.warning "Test"
+
 express = require("express")
 routes = require("./routes")
 #grafic = require("./routes/grafic")
 network = require("./routes/network")
+system = require("./routes/system")
+
 app = module.exports = express.createServer()
 app.configure ->
   app.set "views", __dirname + "/views"
@@ -28,5 +39,8 @@ app.get "/network/getGateway", network.getGateway
 app.get "/network/getInterfaces", network.getInterfaces
 app.get "/network/setGateway", network.setGateway
 app.get "/network/setInterface", network.setInterface
+app.get "/system/halt", system.halt
+app.get "/system/reboot", system.reboot
+
 app.listen 3000
 console.log "Express server listening on port %d in %s mode", app.address().port, app.settings.env

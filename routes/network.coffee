@@ -1,3 +1,4 @@
+logger = require('../logger').logger
 exec = require("child_process").exec
 os = require("os")
 
@@ -16,7 +17,7 @@ returnGateway = (cb) ->
   await
     response = {}
     exec "ip route | awk '/default/ { print $3 }'", defer response.error, response.stdout, response.stderr
-  console.log response.stdout
+  logger.log response.stdout
   cb trim11(response.stdout)
 
 exports.index = (req, res) ->
