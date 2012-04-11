@@ -1,3 +1,3 @@
 exports.init = ->
   Logger = require('devnull')
-  exports.logger = new Logger
+  exports.logger = new Logger({ base: false })
