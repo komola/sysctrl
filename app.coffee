@@ -9,7 +9,7 @@ logger.warning "Test"
 
 express = require("express")
 routes = require("./routes")
-#grafic = require("./routes/grafic")
+grafic = require("./routes/grafic")
 network = require("./routes/network")
 system = require("./routes/system")
 
@@ -33,12 +33,13 @@ app.configure "production", ->
 
 app.get "/", routes.index
 
-#app.get "/grafic", grafic.index
+app.get "/grafic/getResolutions", grafic.getResolutions
 #app.post "/grafic", grafic.set
 app.get "/network/getGateway", network.getGateway
 app.get "/network/getInterfaces", network.getInterfaces
 app.get "/network/setGateway", network.setGateway
 app.get "/network/setInterface", network.setInterface
+app.get "/network/getWlanScan", network.getWlanScan
 app.get "/system/halt", system.halt
 app.get "/system/reboot", system.reboot
 

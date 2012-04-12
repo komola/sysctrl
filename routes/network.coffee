@@ -33,6 +33,25 @@ exports.setGateway = (req, res) ->
   await exec "route add default gw 192.168.1.1", defer response.error, response.stdout, response.stderr
   exports.getGateway req, res
 
+exports.getWlanScan = (req, res) ->
+  response = {}
+  await exec "wpa_cli scan_results", defer response.error, response.stdout, response.stderr
+  scanResultsRaw = response.stdout.split("\n")
+  console.log(scanResultsRaw)
+  scanResults = []
+  for i in scanResultsRaw
+    scanResult = i.split "\t"
+    if scanResult[0].split(":").length == 6 # Checks if first array entry is a mac address
+      scanResults.push({
+        mac: scanResult[0],
+        freqency: scanResult[1],
+        signal: scanResult[2],
+        flags: scanResult[3].match(/[^\][[^\]]*/g).filter((e) -> e),
+        ssid: scanResult[4]
+      })
+    
+  res.json(scanResults)
+
 exports.setDhcp = (req, res) ->
   response = {}
   #await exec "dhclient "+req.params.interface, defer response.error, response.stdout, response.stderr
