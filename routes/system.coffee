@@ -1,3 +1,7 @@
+logger = require('../logger').logger
+exec = require("child_process").exec
+os = require("os")
+
 exports.halt = (req, res) ->
   response = {}
   await exec "halt", defer response.error, response.stdout, response.stderr
