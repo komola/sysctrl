@@ -34,6 +34,7 @@ app.configure "production", ->
 app.get "/", routes.index
 
 app.get "/grafic/getResolutions", grafic.getResolutions
+app.get "/grafic/setResolution", grafic.setResolution
 #app.post "/grafic", grafic.set
 app.get "/network/getGateway", network.getGateway
 app.get "/network/getInterfaces", network.getInterfaces
