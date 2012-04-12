@@ -20,6 +20,27 @@ returnGateway = (cb) ->
   logger.log response.stdout
   cb trim11(response.stdout)
 
+returnWlanScan = (cb) ->
+  response = {}
+  # Get current Accesspoints
+  await exec "wpa_cli scan_results", defer response.error, response.stdout, response.stderr
+  scanResultsRaw = response.stdout.split("\n")
+  console.log(scanResultsRaw)
+  scanResults = {}
+  for i in scanResultsRaw
+    scanResult = i.split "\t"
+    if scanResult[0].split(":").length == 6 # Checks if first array entry is a mac address
+      scanResults[scanResult[4]] = {
+        mac: scanResult[0],
+        freqency: scanResult[1],
+        signal: scanResult[2],
+        flags: scanResult[3].match(/[^\][[^\]]*/g).filter((e) -> e),
+        ssid: scanResult[4]
+      }
+  console.log scanResults
+
+  cb scanResults
+
 exports.index = (req, res) ->
   console.log os.networkInterfaces()
   res.render "index",
@@ -33,23 +54,23 @@ exports.setGateway = (req, res) ->
   await exec "route add default gw 192.168.1.1", defer response.error, response.stdout, response.stderr
   exports.getGateway req, res
 
+exports.setWlan = (req, res) ->
+  await returnWlanScan defer scanResults
+  currentWlan = scanResults["NETGEAR"]
+  if(currentWlan)
+    response = {}
+    await exec "wpa_cli reconfigure && wpa_cli add_network && wpa_cli set_network 0 ssid \"currentWlan[ssid]\"", defer response.error, response.stdout, response.stderr
+    if(currentWlan.flags.length == 0 || currentWlan.flags.indexOf("WEP"))
+      await exec "wpa_cli set_network 0 key_mgmt NONE", defer response.error, response.stdout, response.stderr 
+    if(currentWlan.flags.indexOf("WEP"))
+      await exec "wpa_cli set_network 0 wep_key0 SECRETWEPKEY", defer response.error, response.stdout, response.stderr
+    else
+      await exec "wpa_cli set_network 0 psk Wassermelone", defer response.error, response.stdout, response.stderr
+    await exec "wpa_cli select_network 0", defer response.error, response.stdout, response.stderr
+  res.json {}
+
 exports.getWlanScan = (req, res) ->
-  response = {}
-  await exec "wpa_cli scan_results", defer response.error, response.stdout, response.stderr
-  scanResultsRaw = response.stdout.split("\n")
-  console.log(scanResultsRaw)
-  scanResults = []
-  for i in scanResultsRaw
-    scanResult = i.split "\t"
-    if scanResult[0].split(":").length == 6 # Checks if first array entry is a mac address
-      scanResults.push({
-        mac: scanResult[0],
-        freqency: scanResult[1],
-        signal: scanResult[2],
-        flags: scanResult[3].match(/[^\][[^\]]*/g).filter((e) -> e),
-        ssid: scanResult[4]
-      })
-    
+  await returnWlanScan defer scanResults
   res.json(scanResults)
 
 exports.setDhcp = (req, res) ->

@@ -40,8 +40,12 @@ app.get "/network/getInterfaces", network.getInterfaces
 app.get "/network/setGateway", network.setGateway
 app.get "/network/setInterface", network.setInterface
 app.get "/network/getWlanScan", network.getWlanScan
+app.get "/network/setWlan", network.setWlan
 app.get "/system/halt", system.halt
 app.get "/system/reboot", system.reboot
+app.get "/system/restartBrowser", system.restartBrowser
 
+#Only make the API available on the same machine.
+#app.listen 3000, 127.0.0.1
 app.listen 3000
 console.log "Express server listening on port %d in %s mode", app.address().port, app.settings.env

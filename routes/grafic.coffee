@@ -21,3 +21,8 @@ exports.getResolutions = (req, res) ->
         frequency: frequencies
       })
   res.json(resolutions)
+
+exports.setResolution = (req, res) ->
+  response = {}
+  await exec "xrandr -display :0.0 -s 1650x1080", defer response.error, response.stdout, response.stderr
+  exports.getResolutions(req, res)
