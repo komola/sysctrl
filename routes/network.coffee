@@ -41,6 +41,16 @@ returnWlanScan = (cb) ->
 
   cb scanResults
 
+enableWlan = (cb) ->
+  response = {}
+  await exec "/etc/init.d/wpa_supplicant start", defer response.error, response.stdout, response.stderr
+  cb true
+
+disableWlan = (cb) ->
+  response = {}
+  await exec "/etc/init.d/wpa_supplicant stop", defer response.error, response.stdout, response.stderr
+  cb true
+
 exports.index = (req, res) ->
   console.log os.networkInterfaces()
   res.render "index",

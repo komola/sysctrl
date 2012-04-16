@@ -14,5 +14,5 @@ exports.reboot = (req, res) ->
 
 exports.restartBrowser = (req, res) ->
   response = {}
-  await exec "/etc/init.d/nodm", defer response.error, response.stdout, response.stderr
+  await exec "/etc/init.d/nodm restart", defer response.error, response.stdout, response.stderr
   res.json {}
