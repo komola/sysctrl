@@ -69,23 +69,36 @@ exports.setWlan = (req, res) ->
   currentWlan = scanResults["NETGEAR"]
   if(currentWlan)
     response = {}
-    await exec "wpa_cli reconfigure && wpa_cli add_network && wpa_cli set_network 0 ssid \"currentWlan[ssid]\"", defer response.error, response.stdout, response.stderr
-    if(currentWlan.flags.length == 0 || currentWlan.flags.indexOf("WEP"))
+    await exec "wpa_cli reconfigure && wpa_cli add_network && wpa_cli set_network 0 ssid '\""+currentWlan['ssid']+"\"'", defer response.error, response.stdout, response.stderr
+    console.log("wpa_cli set_network 0 ssid '\""+currentWlan['ssid']+"\"'")
+    if(currentWlan.flags.length == 0 || currentWlan.flags.indexOf("WEP") != -1)
       await exec "wpa_cli set_network 0 key_mgmt NONE", defer response.error, response.stdout, response.stderr 
-    if(currentWlan.flags.indexOf("WEP"))
+      console.log("No encryption")
+    if(currentWlan.flags.indexOf("WEP") != -1)
       await exec "wpa_cli set_network 0 wep_key0 SECRETWEPKEY", defer response.error, response.stdout, response.stderr
     else
-      await exec "wpa_cli set_network 0 psk Wassermelone", defer response.error, response.stdout, response.stderr
+      await exec "wpa_cli set_network 0 psk '\"Wassermelone\"'", defer response.error, response.stdout, response.stderr
+      console.log("wpa_cli set_network 0 psk '\"Wassermelone\"'")
     await exec "wpa_cli select_network 0", defer response.error, response.stdout, response.stderr
-  res.json {}
+  res.json currentWlan
 
 exports.getWlanScan = (req, res) ->
   await returnWlanScan defer scanResults
   res.json(scanResults)
 
+exports.getWlanStatus = (req, res) ->
+  response = {}
+  await exec "wpa_cli status", defer response.error, response.stdout, response.stderr
+  statusRaw = response.stdout.split("\n")
+  statusResult = {}
+  for i in statusRaw
+    status = i.split("=")
+    statusResult[status[0]] = status[1] if status[1]
+  res.json(statusResult)
+
 exports.setDhcp = (req, res) ->
   response = {}
-  #await exec "dhclient "+req.params.interface, defer response.error, response.stdout, response.stderr
+  await exec "dhclient wlan1", defer response.error, response.stdout, response.stderr
   exports.getInterfaces req, res
 
 exports.setInterface = (req, res) ->
