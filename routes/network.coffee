@@ -41,20 +41,11 @@ returnWlanScan = (cb) ->
 
   cb scanResults
 
-enableWlan = (cb) ->
-  response = {}
-  await exec "/etc/init.d/wpa_supplicant start", defer response.error, response.stdout, response.stderr
-  cb true
-
-disableWlan = (cb) ->
-  response = {}
-  await exec "/etc/init.d/wpa_supplicant stop", defer response.error, response.stdout, response.stderr
-  cb true
-
 exports.index = (req, res) ->
   console.log os.networkInterfaces()
   res.render "index",
     title: "Express"
+
 
 exports.setGateway = (req, res) ->
   await returnGateway defer gateway
@@ -66,7 +57,7 @@ exports.setGateway = (req, res) ->
 
 exports.setWlan = (req, res) ->
   await returnWlanScan defer scanResults
-  currentWlan = scanResults["NETGEAR"]
+  currentWlan = scanResults["Komola"]
   if(currentWlan)
     response = {}
     await exec "wpa_cli reconfigure && wpa_cli add_network && wpa_cli set_network 0 ssid '\""+currentWlan['ssid']+"\"'", defer response.error, response.stdout, response.stderr
@@ -85,6 +76,11 @@ exports.setWlan = (req, res) ->
 exports.getWlanScan = (req, res) ->
   await returnWlanScan defer scanResults
   res.json(scanResults)
+
+exports.scanWlan = (req, res) ->
+  response = {}
+  await exec "wpa_cli scan", defer response.error, response.stdout, response.stderr
+  res.json true
 
 exports.getWlanStatus = (req, res) ->
   response = {}

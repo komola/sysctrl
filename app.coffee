@@ -41,11 +41,13 @@ app.get "/network/getInterfaces", network.getInterfaces
 app.get "/network/setGateway", network.setGateway
 app.get "/network/setInterface", network.setInterface
 app.get "/network/getWlanScan", network.getWlanScan
+app.get "/network/scanWlan", network.scanWlan
 app.get "/network/getWlanStatus", network.getWlanStatus
 app.get "/network/setWlan", network.setWlan
 app.get "/network/setDhcp", network.setDhcp
 app.get "/system/halt", system.halt
 app.get "/system/reboot", system.reboot
+app.get "/system/reloadPage", system.reloadPage
 app.get "/system/restartBrowser", system.restartBrowser
 
 #Only make the API available on the same machine.
