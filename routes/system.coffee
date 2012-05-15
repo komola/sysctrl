@@ -16,16 +16,18 @@ exports.reboot = (req, res) ->
 
 exports.reloadPage = (req, res) ->
   await restler.get('http://localhost:9222/json').on 'complete', defer result  
-
-  runs = 0
-  for i in result
-    ++runs
-    websocket = new Websocket(i.webSocketDebuggerUrl)
-    websocket.on 'open', ->
-      websocket.send '{"id":1,"method":"Page.reload","params": {"ignoreCache":false}}'
-      # only gets executed when all callbacks are finished
-      if --runs <= 0
-        res.json {}
+  if(result.length > 0)
+    runs = 0
+    for i in result
+      ++runs
+      websocket = new Websocket(i.webSocketDebuggerUrl)
+      websocket.on 'open', ->
+        websocket.send '{"id":1,"method":"Page.reload","params": {"ignoreCache":false}}'
+        # only gets executed when all callbacks are finished
+        if --runs <= 0
+          res.json {}
+  else
+    exports.restartBrowser(req, res)
 
 exports.restartBrowser = (req, res) ->
   response = {}
