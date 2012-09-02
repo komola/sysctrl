@@ -13,6 +13,17 @@ trim11 = (str) ->
     i--
   str
 
+isIP = (obj) ->
+  ary = obj.value.split(".")
+  ip = true
+  for i of ary
+    ip = (if (not ary[i].match(/^\d{1,3}$/) or (Number(ary[i]) > 255)) then false else ip)
+  ip = (if (ary.length isnt 4) then false else ip)
+  unless ip # the value is NOT a valid IP address
+    return true
+  else # the value IS a valid IP address
+    return false
+
 returnGateway = (cb) ->
   await
     response = {}
@@ -50,14 +61,16 @@ exports.index = (req, res) ->
 exports.setGateway = (req, res) ->
   await returnGateway defer gateway
   response = {}
-  if gateway
-    await exec "route del default gw "+gateway, defer response.error, response.stdout, response.stderr
-  await exec "route add default gw 192.168.1.1", defer response.error, response.stdout, response.stderr
-  exports.getGateway req, res
+  gatewayIP = req.body.ip
+  if isIP(gatewayIP)
+    if gateway
+      await exec "route del default gw "+gateway, defer response.error, response.stdout, response.stderr
+    await exec "route add default gw "+gatewayIP, defer response.error, response.stdout, response.stderr
+    exports.getGateway req, res
 
 exports.setWlan = (req, res) ->
   await returnWlanScan defer scanResults
-  currentWlan = scanResults["Komola"]
+  currentWlan = scanResults[req.body.ssid]
   if(currentWlan)
     response = {}
     await exec "wpa_cli reconfigure && wpa_cli add_network && wpa_cli set_network 0 ssid '\""+currentWlan['ssid']+"\"'", defer response.error, response.stdout, response.stderr
@@ -66,10 +79,10 @@ exports.setWlan = (req, res) ->
       await exec "wpa_cli set_network 0 key_mgmt NONE", defer response.error, response.stdout, response.stderr 
       console.log("No encryption")
     if(currentWlan.flags.indexOf("WEP") != -1)
-      await exec "wpa_cli set_network 0 wep_key0 SECRETWEPKEY", defer response.error, response.stdout, response.stderr
+      await exec "wpa_cli set_network 0 wep_key0 "+req.body.password, defer response.error, response.stdout, response.stderr
     else
-      await exec "wpa_cli set_network 0 psk '\"Wassermelone\"'", defer response.error, response.stdout, response.stderr
-      console.log("wpa_cli set_network 0 psk '\"Wassermelone\"'")
+      console.log "wpa_cli set_network 0 psk '\""+req.body.password+"\"'"
+      await exec "wpa_cli set_network 0 psk '\""+req.body.password+"\"'", defer response.error, response.stdout, response.stderr
     await exec "wpa_cli select_network 0", defer response.error, response.stdout, response.stderr
   res.json currentWlan
 
@@ -99,8 +112,10 @@ exports.setDhcp = (req, res) ->
 
 exports.setInterface = (req, res) ->
   response = {}
-  #await exec "ifconfig "+req.params.interface+" "+req.params.ip+" netmask "+req.params.netmask, defer response.error, response.stdout, response.stderr
+  if ( req.body.interface == "eth0" || req.body.interface == "wlan1" ) && (req.body.ip) && isIP(req.body.netmask)
+    await exec "ifconfig "+req.body.interface+" "+req.body.ip+" netmask "+req.body.netmask, defer response.error, response.stdout, response.stderr
   exports.getInterfaces req, res
+
 
 exports.getInterfaces = (req, res) ->
   networkInterfaces = os.networkInterfaces()

@@ -26,9 +26,3 @@ exports.setResolution = (req, res) ->
   response = {}
   await exec "xrandr -display :0.0 -s 1650x1080", defer response.error, response.stdout, response.stderr
   exports.getResolutions(req, res)
-
-
-exports.setResolution = (req, res) ->
-  response = {}
-  await exec "xrandr -d :0.0 -s 1680x1050", defer response.error, response.stdout, response.stderr
-  res.json {}
