@@ -96,7 +96,7 @@ exports.copyPartition = (req, res) ->
 
   if deviceUUID
     await exec 'umount -f /dev/disk/by-uuid/'+deviceUUID, defer umountResponse.error, umountResponse.stdout, umountResponse.stderr
-    await exec 'mkdir /mnt/'+timestamp+' && mount /dev/disk/by-uuid/'+deviceUUID+' /mnt/'+timestamp+' && rsync -a --include "*/" /mnt/'+timestamp+' '+copyToPath+'/'+timestamp+'/ && umount -f /mnt/'+timestamp+' && rmdir /mnt/'+timestamp, defer response.error, response.stdout, response.stderr
+    await exec 'mkdir -p /mnt/'+timestamp+' && mount /dev/disk/by-uuid/'+deviceUUID+' /mnt/'+timestamp+' && rsync -a --include "*/" /mnt/'+timestamp+' '+copyToPath+'/'+timestamp+'/ && umount -f /mnt/'+timestamp+' && rmdir /mnt/'+timestamp, defer response.error, response.stdout, response.stderr
     if(response.error)
       res.json response
     else
