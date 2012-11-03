@@ -25,11 +25,9 @@ isIP = (obj) ->
     return false
 
 returnGateway = (cb) ->
-  await
-    response = {}
-    exec "ip route | awk '/default/ { print $3 }'", defer response.error, response.stdout, response.stderr
-  logger.log response.stdout
-  cb trim11(response.stdout)
+  exec "ip route | awk '/default/ { print $3 }'", (error, stdout, stderr) ->
+    logger.log stdout
+    cb trim11(stdout)
 
 returnWlanScan = (cb) ->
   response = {}
@@ -87,28 +85,26 @@ exports.setWlan = (req, res) ->
   res.json currentWlan
 
 exports.getWlanScan = (req, res) ->
-  await returnWlanScan defer scanResults
-  res.json(scanResults)
+  returnWlanScan((scanResults) ->
+    res.json(scanResults)
+  )
 
 exports.scanWlan = (req, res) ->
-  response = {}
-  await exec "wpa_cli scan", defer response.error, response.stdout, response.stderr
-  res.json true
+  exec "wpa_cli scan", (eror, stdout, stderr) ->
+    res.json true
 
 exports.getWlanStatus = (req, res) ->
-  response = {}
-  await exec "wpa_cli status", defer response.error, response.stdout, response.stderr
-  statusRaw = response.stdout.split("\n")
-  statusResult = {}
-  for i in statusRaw
-    status = i.split("=")
-    statusResult[status[0]] = status[1] if status[1]
-  res.json(statusResult)
+  exec "wpa_cli status", (error, stdout, stderr) ->
+    statusRaw = stdout.split("\n")
+    statusResult = {}
+    for i in statusRaw
+      status = i.split("=")
+      statusResult[status[0]] = status[1] if status[1]
+    res.json(statusResult)
 
 exports.setDhcp = (req, res) ->
-  response = {}
-  await exec "dhclient wlan1", defer response.error, response.stdout, response.stderr
-  exports.getInterfaces req, res
+  exec "dhclient wlan1", (error, stdout, stderr) ->
+    exports.getInterfaces req, res
 
 exports.setInterface = (req, res) ->
   response = {}
@@ -134,5 +130,6 @@ exports.getInterfaces = (req, res) ->
   res.json networkInterfaces
 
 exports.getGateway = (req, res) ->
-  await returnGateway defer gateway
-  res.json gateway
+  returnGateway((gateway) ->
+    res.json gateway
+  )
