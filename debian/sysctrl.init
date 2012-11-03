@@ -63,7 +63,8 @@
 
 DESC="sysctrl"
 NAME="app.coffee"
-DIR=`/usr/bin/dirname $(/bin/readlink -f $0)`
+#DIR=`/usr/bin/dirname $(/bin/readlink -f $0)`
+DIR="/opt/sysctrl"
 APP=${NAME}
 OPTIONS=""
 # export NODE_ENV=${NODE_ENV:="production"}

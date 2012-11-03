@@ -1,0 +1,5 @@
+routes/* opt/sysctrl/routes/
+views/* opt/sysctrl/views/
+
+*.json opt/sysctrl/
+*.coffee opt/sysctrl/

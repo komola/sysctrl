@@ -1,0 +1,13 @@
+bd3e149a3a6b6cc5a0979f0e14ae3964  opt/sysctrl/app.coffee
+7b0f38f7222087cb47e405e37abeb197  opt/sysctrl/logger.coffee
+ffaf972227460665e11daa1b99c4e300  opt/sysctrl/package.json
+291b6541a92e45bab3aecfed33ad9331  opt/sysctrl/routes/grafic.coffee
+8a2c9535e3e1fa6e37d885cb5bbf1b8f  opt/sysctrl/routes/index.js
+3e60b9566e88aa560282ccdb7b722593  opt/sysctrl/routes/network.coffee
+cec7ae772b42aaaf1b30f4873cb38062  opt/sysctrl/routes/system.coffee
+4cba7a5c45ec6cf614d7935558e6f323  opt/sysctrl/views/index.ejs
+b594315aa0d7f2ea8326b09cee3143e3  opt/sysctrl/views/layout.ejs
+848ae13a15b54bbd3d7f22e8a51a1dd9  usr/share/doc/sysctrl/README.Debian
+3c5b554862f0096312a55ed11f6f6ba4  usr/share/doc/sysctrl/README.md
+e9929fc6ecfa55a331521d427e51537b  usr/share/doc/sysctrl/changelog.Debian.gz
+34c753930ae75e5ec4169533d69a837e  usr/share/doc/sysctrl/copyright

@@ -1,0 +1,13 @@
+{
+    "name": "application-name"
+  , "version": "0.0.1"
+  , "private": true
+  , "dependencies": {
+      "express": "2.5.8"
+    , "ejs": ">= 0.0.1"
+    , "devnull": ">= 0.0.1"
+    , "restler": ">= 0.0.1"
+    , "ws": ">= 0.0.1"
+    , "iced-coffee-script": ">= 0.0.1"
+  }
+}

@@ -1,0 +1,11 @@
+sysctrl (0.0.1-2) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- root <root@komola-lockdown>  Sat, 03 Nov 2012 00:41:06 +0000
+
+sysctrl (0.0.1-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- root <root@komola-lockdown>  Sat, 03 Nov 2012 00:41:06 +0000
