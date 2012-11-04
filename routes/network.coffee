@@ -1,6 +1,7 @@
 logger = require('../logger').logger
 exec = require("child_process").exec
 os = require("os")
+async = require("async")
 
 trim11 = (str) ->
   str = str.replace(/^\s+/, "")
@@ -57,14 +58,22 @@ exports.index = (req, res) ->
 
 
 exports.setGateway = (req, res) ->
-  await returnGateway defer gateway
-  response = {}
-  gatewayIP = req.body.ip
-  if isIP(gatewayIP)
-    if gateway
-      await exec "route del default gw "+gateway, defer response.error, response.stdout, response.stderr
-    await exec "route add default gw "+gatewayIP, defer response.error, response.stdout, response.stderr
-    exports.getGateway req, res
+  returnGateway((gateway) ->
+    gatewayIP = req.body.ip
+    if isIP(gatewayIP)
+      async.waterfall([
+        (callback) ->
+          if gateway
+            exec "route del default gw "+gateway, (error, stdout, stderr) ->
+              callback(null)
+          else
+            callback(null)
+        ,(callback) ->
+          exec "route add default gw "+gatewayIP, (error, stdout, stderr) ->
+            exports.getGateway req, res
+            callback(null)
+      ])
+  )
 
 exports.setWlan = (req, res) ->
   await returnWlanScan defer scanResults
@@ -107,27 +116,40 @@ exports.setDhcp = (req, res) ->
     exports.getInterfaces req, res
 
 exports.setInterface = (req, res) ->
-  response = {}
-  if ( req.body.interface == "eth0" || req.body.interface == "wlan1" ) && (req.body.ip) && isIP(req.body.netmask)
-    await exec "ifconfig "+req.body.interface+" "+req.body.ip+" netmask "+req.body.netmask, defer response.error, response.stdout, response.stderr
-  exports.getInterfaces req, res
+  async.waterfall([
+    (callback) ->
+      if ( req.body.interface == "eth0" || req.body.interface == "wlan1" ) && (req.body.ip) && isIP(req.body.netmask)
+        exec "ifconfig "+req.body.interface+" "+req.body.ip+" netmask "+req.body.netmask, (error, stdout, stderr) ->
+          callback(null)
+      else
+        callback(null)
+    ,(callback) ->
+      exports.getInterfaces req, res
+  ])
 
 
 exports.getInterfaces = (req, res) ->
   networkInterfaces = os.networkInterfaces()
   array = []
-  await 
-    for networkInterface, i of networkInterfaces when networkInterface != "lo"
-      response = {}
-      exec "ifconfig " + networkInterface + " | sed -rn '2s/ .*:(.*)$/\\1/p'", defer response.error, response.stdout, response.stderr
-      array[networkInterface] = response
+  async.waterfall([
+    (callback) ->
+      runs = 0
+      for networkInterface, i of networkInterfaces when networkInterface != "lo"
+        ++runs
+        response = {}
+        exec "ifconfig " + networkInterface + " | sed -rn '2s/ .*:(.*)$/\\1/p'", (error, stdout, stderr) ->
+          array[networkInterface] = response
+          if --runs <= 0
+                callback(null)
+    ,(callback) ->
+      for networkInterface, value of array
+        do(networkInterface, value) ->
+          # Only add the gateway when we have a IPv4 network
+          a.gateway = trim11 value.stdout for a in networkInterfaces[networkInterface] when a.family is "IPv4"
 
-  for networkInterface, value of array
-    do(networkInterface, value) ->
-      # Only add the gateway when we have a IPv4 network
-      a.gateway = trim11 value.stdout for a in networkInterfaces[networkInterface] when a.family is "IPv4"
-
-  res.json networkInterfaces
+      res.json networkInterfaces
+      callback(null)
+    ])
 
 exports.getGateway = (req, res) ->
   returnGateway((gateway) ->

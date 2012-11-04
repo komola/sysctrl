@@ -99,7 +99,7 @@ running() {
 }
 
 start_server() {
-	forever start -c iced -p ${DIR} ${APP} ${OPTIONS} 2>&1 >/dev/null
+	forever start -c coffee -p ${DIR} ${APP} ${OPTIONS} 2>&1 >/dev/null
 	return $?
 }
 
