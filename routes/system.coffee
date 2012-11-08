@@ -16,6 +16,7 @@ exports.reboot = (req, res) ->
 
 exports.reloadPage = (req, res) ->
   restler.get('http://localhost:9222/json').on 'complete', (result) ->
+    console.log result
     if(result.length > 0)
       runs = 0
       for i in result
@@ -55,38 +56,55 @@ returnPartitions = (cb) ->
       callback(null, systemPartitionsNice)
 
     (systemPartitionsNice, callback) ->
-
       exec "blkid -c /dev/null -o export", (error, stdout, stderr) ->
         partitionsRaw = stdout.split("\n\n")
         partionsNice = []
-        
-        for i, count in partitionsRaw
-          async.waterfall([
-            (innercallback) ->
-              #console.log i, count
-              cache = {}
-              systemDisk = false;
-              attributes = i.split("\n")
-              for attribute in attributes
-                if attribute != ""
-                  attributeVars = attribute.split("=")
-                  cache[attributeVars[0]] = attributeVars[1]
-                  if(attributeVars[0] == "UUID" && systemPartitionsNice[attributeVars[1]])
-                    systemDisk = true
-              innercallback(null, cache, systemDisk)
-            ,
-            (cache, systemDisk, innercallback) ->
-              if(systemDisk == false)
-                exec "fdisk -s /dev/disk/by-uuid/"+cache["UUID"], (error, stdout, stderr) ->
-                  cache.space = response.stdout.replace(/^\s+/, '').replace(/\s+$/, '')*1024;
-                  partionsNice.push(cache)
+        runs = 0
+        #console.log partitionsRaw
+        for b, count in partitionsRaw
+          do (b, count) =>
+            ++runs
+            #console.log "bla"
+            #console.log b
+            
+            async.waterfall([
+              (innercallback) ->
+                #console.log i, count
+                cache = {}
+                systemDisk = false;
+                #console.log "water"
+                #console.log b
+                attributes = b.split("\n")
+                
+                for attribute in attributes
+                  if attribute != ""
+
+                    attributeVars = attribute.split("=")
+                    cache[attributeVars[0]] = attributeVars[1]
+                    
+                    if(attributeVars[0] == "UUID" && systemPartitionsNice[attributeVars[1]])
+                      systemDisk = true
+
+                innercallback(null, cache, systemDisk)
+
+              ,
+              (cache, systemDisk, innercallback) ->
+                #console.log systemDisk
+                if(systemDisk == false)
+                  exec "fdisk -s /dev/disk/by-uuid/"+cache["UUID"], (error, stdout, stderr) ->
+                    cache.space = stdout.replace(/^\s+/, '').replace(/\s+$/, '')*1024;
+                    partionsNice.push(cache)
+                    innercallback(null)
+                else
                   innercallback(null)
-              innercallback(null)
-            ], (err) ->
-              callback(null, partionsNice))
+              ], (err) ->
+                if --runs <= 0
+                  console.log partionsNice
+                  callback(null, partionsNice)
+                )
       ], (err, partionsNice) ->
-        console.log partionsNice
-        console.log "last one"
+        #console.log partionsNice
+        #console.log "last one"
         cb partionsNice
       )
 
