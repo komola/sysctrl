@@ -31,25 +31,24 @@ returnGateway = (cb) ->
     cb trim11(stdout)
 
 returnWlanScan = (cb) ->
-  response = {}
   # Get current Accesspoints
-  await exec "wpa_cli scan_results", defer response.error, response.stdout, response.stderr
-  scanResultsRaw = response.stdout.split("\n")
-  console.log(scanResultsRaw)
-  scanResults = {}
-  for i in scanResultsRaw
-    scanResult = i.split "\t"
-    if scanResult[0].split(":").length == 6 # Checks if first array entry is a mac address
-      scanResults[scanResult[4]] = {
-        mac: scanResult[0],
-        freqency: scanResult[1],
-        signal: scanResult[2],
-        flags: scanResult[3].match(/[^\][[^\]]*/g).filter((e) -> e),
-        ssid: scanResult[4]
-      }
-  console.log scanResults
+  exec "wpa_cli scan_results", (error, stdout, stderr) ->
+    scanResultsRaw = stdout.split("\n")
+    console.log(scanResultsRaw)
+    scanResults = {}
+    for i in scanResultsRaw
+      scanResult = i.split "\t"
+      if scanResult[0].split(":").length == 6 # Checks if first array entry is a mac address
+        scanResults[scanResult[4]] = {
+          mac: scanResult[0],
+          freqency: scanResult[1],
+          signal: scanResult[2],
+          flags: scanResult[3].match(/[^\][[^\]]*/g).filter((e) -> e),
+          ssid: scanResult[4]
+        }
+    console.log scanResults
 
-  cb scanResults
+    cb scanResults
 
 exports.index = (req, res) ->
   console.log os.networkInterfaces()
@@ -76,22 +75,34 @@ exports.setGateway = (req, res) ->
   )
 
 exports.setWlan = (req, res) ->
-  await returnWlanScan defer scanResults
-  currentWlan = scanResults[req.body.ssid]
-  if(currentWlan)
-    response = {}
-    await exec "wpa_cli reconfigure && wpa_cli add_network && wpa_cli set_network 0 ssid '\""+currentWlan['ssid']+"\"'", defer response.error, response.stdout, response.stderr
-    console.log("wpa_cli set_network 0 ssid '\""+currentWlan['ssid']+"\"'")
-    if(currentWlan.flags.length == 0 || currentWlan.flags.indexOf("WEP") != -1)
-      await exec "wpa_cli set_network 0 key_mgmt NONE", defer response.error, response.stdout, response.stderr 
-      console.log("No encryption")
-    if(currentWlan.flags.indexOf("WEP") != -1)
-      await exec "wpa_cli set_network 0 wep_key0 "+req.body.password, defer response.error, response.stdout, response.stderr
+  returnWlanScan((scanResults) ->
+    currentWlan = scanResults[req.body.ssid]
+    if(currentWlan)
+      console.log currentWlan
+      exec "wpa_cli reconfigure && wpa_cli add_network && wpa_cli set_network 0 ssid '\""+currentWlan['ssid']+"\"'", (error, stdout, stderr) ->
+
+        async.waterfall([
+          (callback) ->
+            if(currentWlan.flags.length == 0 || currentWlan.flags.indexOf("WEP") != -1)
+              exec "wpa_cli set_network 0 key_mgmt NONE", (error, stdout, stderr) ->
+                callback(null)
+            else
+              callback(null)
+          ,
+          (callback) ->
+            if(currentWlan.flags.indexOf("WEP") != -1)
+              exec "wpa_cli set_network 0 wep_key0 "+req.body.password, (error, stdout, stderr) ->
+                callback(null)
+            else
+              exec "wpa_cli set_network 0 psk '\""+req.body.password+"\"'", (error, stdout, stderr) ->
+                callback(null)
+          ], (error) ->
+            exec "wpa_cli select_network 0", (error, stdout, stderr) ->
+              res.json currentWlan
+          )
     else
-      console.log "wpa_cli set_network 0 psk '\""+req.body.password+"\"'"
-      await exec "wpa_cli set_network 0 psk '\""+req.body.password+"\"'", defer response.error, response.stdout, response.stderr
-    await exec "wpa_cli select_network 0", defer response.error, response.stdout, response.stderr
-  res.json currentWlan
+      res.json {}
+  )
 
 exports.getWlanScan = (req, res) ->
   returnWlanScan((scanResults) ->
@@ -103,6 +114,7 @@ exports.scanWlan = (req, res) ->
     res.json true
 
 exports.getWlanStatus = (req, res) ->
+  console.log "test"
   exec "wpa_cli status", (error, stdout, stderr) ->
     statusRaw = stdout.split("\n")
     statusResult = {}
@@ -112,7 +124,7 @@ exports.getWlanStatus = (req, res) ->
     res.json(statusResult)
 
 exports.setDhcp = (req, res) ->
-  exec "dhclient wlan1", (error, stdout, stderr) ->
+  exec "dhclient wlan0", (error, stdout, stderr) ->
     exports.getInterfaces req, res
 
 exports.setInterface = (req, res) ->
@@ -136,20 +148,22 @@ exports.getInterfaces = (req, res) ->
       runs = 0
       for networkInterface, i of networkInterfaces when networkInterface != "lo"
         ++runs
-        response = {}
         exec "ifconfig " + networkInterface + " | sed -rn '2s/ .*:(.*)$/\\1/p'", (error, stdout, stderr) ->
-          array[networkInterface] = response
+          array[networkInterface] = {'stdout': stdout, 'error': error, 'stderr': stderr}
           if --runs <= 0
-                callback(null)
+            callback(null)
     ,(callback) ->
+      runs = 0
       for networkInterface, value of array
+        ++runs
         do(networkInterface, value) ->
           # Only add the gateway when we have a IPv4 network
           a.gateway = trim11 value.stdout for a in networkInterfaces[networkInterface] when a.family is "IPv4"
-
+          if --runs <= 0
+            callback(null)
+    ], (error) ->
       res.json networkInterfaces
-      callback(null)
-    ])
+    )
 
 exports.getGateway = (req, res) ->
   returnGateway((gateway) ->
