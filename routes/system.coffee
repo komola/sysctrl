@@ -132,7 +132,7 @@ exports.copyPartition = (req, res) ->
     if deviceUUID
       
       exec 'umount -f /dev/disk/by-uuid/'+deviceUUID, (error, stdout, strerr) ->
-        exec 'mkdir -p /mnt/'+timestamp+' && mount /dev/disk/by-uuid/'+deviceUUID+' /mnt/'+timestamp+' && rsync -a --include "*/" /mnt/'+timestamp+' '+copyToPath+'/'+timestamp+'/ && umount -f /mnt/'+timestamp+' && rmdir /mnt/'+timestamp, (error, stdout, stderr) ->
+        exec 'mkdir -p /mnt/'+timestamp+' && mount /dev/disk/by-uuid/'+deviceUUID+' /mnt/'+timestamp+' && rsync -a --include "*/" /mnt/'+timestamp+' '+copyToPath+'/'+timestamp+'/ && umount -f /mnt/'+timestamp+' && /opt/prisma-box-app/upload.sh '+copyToPath+'/'+timestamp+'/ && rmdir /mnt/'+timestamp, (error, stdout, stderr) ->
           response = {'error': error, 'stdout': stdout, 'stderr': stderr}
           if(response.error)
             res.json response
